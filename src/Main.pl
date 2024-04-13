@@ -63,6 +63,20 @@ $mw->bind('<KeyPress-Right>', sub {
 $mw->repeat(100 => sub {
   my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
   
+  # Check for collision
+  foreach my $obstacle (@obstacles) {
+
+    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
+    my ($mx1, $my1, $mx2, $my2) = $canvas->bbox($heli);
+  
+    if ($mx1 < $ox2 && $mx2 > $ox1 && $my1 < $oy2 && $my2 > $oy1) {
+      # Stop movement on bottom collision and slide if side collision
+      if (($mx1 + 2) != $ox2 && $mx2 != ($ox1 + 2)) {
+        return;
+      }
+    }
+  }
+
   if($y1 < $canvas->cget(-height)) {
     $canvas->move($heli, 0, 10);
   }
