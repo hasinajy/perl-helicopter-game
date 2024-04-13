@@ -45,7 +45,7 @@ $mw->bind('<KeyPress-Up>', sub {
       print("hy1: $hy1 - oy2: $oy2\n");
 
       # Allow take off & block top collision
-      if ($hy2 != ($oy1 + 2) && ($hx1 + 2) < $ox2) {
+      if ($hy2 != ($oy1 + 2) && ($hx1 + 2) < $ox2 && $hx2 != ($ox1 + 2)) {
         return;
       }
     }
