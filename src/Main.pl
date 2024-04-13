@@ -10,6 +10,9 @@ my $mw = MainWindow->new;
 my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'gray75')->pack;
 
 # ------------------------------- Terrain setup ------------------------------ #
+# Helicopter
+$heli = $canvas->create('rectangle', 0, 250, 50, 300, -fill => 'orange');
+
 # Start platform
 $start_pl = $canvas->create('rectangle', 0, 300, 100, 350, -fill => 'blue');
 
