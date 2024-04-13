@@ -82,7 +82,20 @@ $mw->bind('<KeyPress-Left>', sub {
 # Move right
 $mw->bind('<KeyPress-Right>', sub {  
   my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
+    
+  # Check for collision
+  foreach my $obstacle (@obstacles) {
+    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
+    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
   
+    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
+      # Block right movement on collision
+      if ($hx2 != $ox1) {
+        return;
+      }
+    }
+  }
+
   if ($x0 + $move_step < $canvas->cget(-width) - $block_size) {
     $canvas->move($heli, $move_step, 0);
   }
