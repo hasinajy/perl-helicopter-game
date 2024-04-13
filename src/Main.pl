@@ -28,6 +28,7 @@ $obs_2 = $canvas->create('rectangle', 500, 450, 600, 150, -fill => 'firebrick');
 # -------------------------------- Key mapping ------------------------------- #
 $move_step = 10;
 
+# Move up
 $mw->bind('<KeyPress-Up>', sub { 
   print("Move up!\n");
 
@@ -38,6 +39,7 @@ $mw->bind('<KeyPress-Up>', sub {
   }
 });
 
+# Move left
 $mw->bind('<KeyPress-Left>', sub {  
   print("Move left!\n");
 
@@ -48,6 +50,7 @@ $mw->bind('<KeyPress-Left>', sub {
   }
 });
 
+# Move right
 $mw->bind('<KeyPress-Right>', sub {  
   print("Move right!\n");
 
