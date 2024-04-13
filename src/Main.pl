@@ -28,6 +28,10 @@ $obs_2 = $canvas->create('rectangle', 500, 450, 600, 150, -fill => 'firebrick');
 # -------------------------------- Key mapping ------------------------------- #
 $move_step = 10;
 
+my @obstacles = (
+    $start_pl, $end_pl, $obs_1, $obs_2
+);
+
 # Move up
 $mw->bind('<KeyPress-Up>', sub { 
   print("Move up!\n");
