@@ -42,8 +42,10 @@ $mw->bind('<KeyPress-Up>', sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
   
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
+      print("hy1: $hy1 - oy2: $oy2\n");
+
       # Allow take off & block top collision
-      if ($hy2 != ($oy1 + 2)) {
+      if ($hy2 != ($oy1 + 2) && ($hx1 + 2) < $ox2) {
         return;
       }
     }
