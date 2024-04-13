@@ -87,7 +87,7 @@ $mw->bind('<KeyPress-Right>', sub {
   
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
       # Block right movement on collision
-      if ($hx2 != $ox1 && ($hx1 + 2) < $ox2) {
+      if ($hx2 != $ox1 && ($hx1 + 2) < $ox2 && $hy2 > ($oy1 + 2)) {
         return;
       }
     }
