@@ -44,7 +44,7 @@ $mw->bind('<KeyPress-Up>', sub {
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
       print("hy1: $hy1 - oy2: $oy2\n");
       print("hy2: $hy2 - oy1: $oy1\n");
-      
+
       # Allow take off & block top collision
       if ($hy2 != ($oy1 + 2)) {
         return;
@@ -87,7 +87,7 @@ $mw->repeat(100 => sub {
   
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
       # Stop movement on bottom collision and slide if side collision
-      if (($hx1 + 2) != $ox2 && $hx2 != ($ox1 + 2)) {
+      if (($hx1 + 2) != $ox2 && $hx2 != ($ox1 + 2) && ($hy1 + 2) != $oy2) {
         return;
       }
     }
