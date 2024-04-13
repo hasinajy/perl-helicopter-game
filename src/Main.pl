@@ -42,7 +42,7 @@ $mw->bind('<KeyPress-Left>', sub {
   print("Move left!\n");
 
   my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-  
+
   if ($x0 - $move_step > 0) {
     $canvas->move($heli, -$move_step, 0);
   }
