@@ -34,8 +34,6 @@ my @obstacles = (
 
 # Move up
 $mw->bind('<KeyPress-Up>', sub { 
-  print("Move up!\n");
-
   my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
 
   if ($y0 + $dy > 0) {
@@ -45,8 +43,6 @@ $mw->bind('<KeyPress-Up>', sub {
 
 # Move left
 $mw->bind('<KeyPress-Left>', sub {  
-  print("Move left!\n");
-
   my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
 
   if ($x0 - $move_step > 0) {
@@ -56,8 +52,6 @@ $mw->bind('<KeyPress-Left>', sub {
 
 # Move right
 $mw->bind('<KeyPress-Right>', sub {  
-  print("Move right!\n");
-
   my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
   
   if ($x0 + $move_step < $canvas->cget(-width) - $block_size) {
