@@ -44,7 +44,8 @@ $mw->bind('<KeyPress-Up>', sub {
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
       print("hy1: $hy1 - oy2: $oy2\n");
 
-      # Allow take off & block top collision
+      # Block top collision
+      # Allow top move on left & right collision
       if ($hy2 != ($oy1 + 2) && ($hx1 + 2) < $ox2 && $hx2 != ($ox1 + 2)) {
         return;
       }
@@ -66,7 +67,8 @@ $mw->bind('<KeyPress-Left>', sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
   
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block left movement on collision
+      # Block left collision
+      # Allow left move on bottom & right collision
       if ($hx1 != $ox2 && $hx2 != ($ox1 + 2) && $hy2 > ($oy1 + 2)) {
         return;
       }
@@ -88,7 +90,8 @@ $mw->bind('<KeyPress-Right>', sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
   
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block right movement on collision
+      # Block right collision
+      # Allow right move on bottom & left collision
       if ($hx2 != $ox1 && ($hx1 + 2) < $ox2 && $hy2 > ($oy1 + 2)) {
         return;
       }
@@ -111,7 +114,8 @@ $mw->repeat(100 => sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
   
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Stop movement on bottom collision and slide if side collision
+      # Block bottom collision
+      # Allow bottom move on side collision
       if (($hx1 + 2) != $ox2 && $hx2 != ($ox1 + 2) && ($hy1 + 2) != $oy2) {
         return;
       }
