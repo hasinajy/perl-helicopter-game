@@ -65,7 +65,7 @@ $mw->bind('<KeyPress-Left>', sub {
   
     if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
       # Block left movement on collision
-      if ($hx1 != $ox2 && $hx2 != ($ox1 + 2)) {
+      if ($hx1 != $ox2 && $hx2 != ($ox1 + 2) && $hy2 > ($oy1 + 2)) {
         return;
       }
     }
