@@ -61,5 +61,14 @@ $mw->bind('<KeyPress-Right>', sub {
   }
 });
 
+# Auto move down
+$mw->repeat(100 => sub {
+  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
+  
+  if($y1 < $canvas->cget(-height)) {
+    $canvas->move($heli, 0, 10);
+  }
+});
+
 # ------------------------------------ Run ----------------------------------- #
 MainLoop;
