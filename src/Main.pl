@@ -25,5 +25,18 @@ $obs_1 = $canvas->create('rectangle', 200, 0, 300, 300, -fill => 'firebrick');
 # Obstacle - 02
 $obs_2 = $canvas->create('rectangle', 500, 450, 600, 150, -fill => 'firebrick');
 
+# -------------------------------- Key mapping ------------------------------- #
+$move_step = 10;
+
+$mw->bind('<KeyPress-Up>', sub { 
+  print("Move up!\n");
+
+  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
+
+  if ($y0 + $dy > 0) {
+    $canvas->move($heli, 0, -$move_step);
+  }
+});
+
 # ------------------------------------ Run ----------------------------------- #
 MainLoop;
