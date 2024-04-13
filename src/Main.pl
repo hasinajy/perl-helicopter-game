@@ -44,7 +44,17 @@ $mw->bind('<KeyPress-Left>', sub {
   my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
   
   if ($x0 - $move_step > 0) {
-    $canvas->move($helicopter, -$move_step, 0);
+    $canvas->move($heli, -$move_step, 0);
+  }
+});
+
+$mw->bind('<KeyPress-Right>', sub {  
+  print("Move right!\n");
+
+  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
+  
+  if ($x0 + $move_step < $canvas->cget(-width) - $block_size) {
+    $canvas->move($heli, $move_step, 0);
   }
 });
 
