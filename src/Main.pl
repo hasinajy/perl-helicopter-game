@@ -11,10 +11,10 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'g
 
 # ------------------------------- Terrain setup ------------------------------ #
 # Start platform
-$platform_1 = $canvas->create('rectangle', 0, 300, 100, 350, -fill => 'blue');
+$start_pl = $canvas->create('rectangle', 0, 300, 100, 350, -fill => 'blue');
 
 # End platform
-$platform_2 = $canvas->create('rectangle', 700, 100, 800, 150, -fill => 'blue');
+$end_pl = $canvas->create('rectangle', 700, 100, 800, 150, -fill => 'blue');
 
 # Run
 MainLoop;
