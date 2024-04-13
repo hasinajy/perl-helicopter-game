@@ -67,11 +67,11 @@ $mw->repeat(100 => sub {
   foreach my $obstacle (@obstacles) {
 
     my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($mx1, $my1, $mx2, $my2) = $canvas->bbox($heli);
+    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
   
-    if ($mx1 < $ox2 && $mx2 > $ox1 && $my1 < $oy2 && $my2 > $oy1) {
+    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
       # Stop movement on bottom collision and slide if side collision
-      if (($mx1 + 2) != $ox2 && $mx2 != ($ox1 + 2)) {
+      if (($hx1 + 2) != $ox2 && $hx2 != ($ox1 + 2)) {
         return;
       }
     }
