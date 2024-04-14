@@ -57,14 +57,19 @@ $mw->repeat(60, sub {
     my ($left, $top, $right, $bottom) = $canvas->bbox($heli);
 
     if ($key_state{'Up'} && $key_state{'Right'} && $top > 0 && $right < $canvas->cget('-width')) {
+        # Oblique top-right
         $canvas->move($heli, $speed, -$speed);
     } elsif ($key_state{'Up'} && $key_state{'Left'} && $top > 0 && $left > 0) {
+        # Oblique top-left
         $canvas->move($heli, -$speed, -$speed);
     } elsif ($key_state{'Up'} && $top > 0) {
+        # Move top
         $canvas->move($heli, 0, -$speed);
     } elsif ($key_state{'Right'} && $right < $canvas->cget('-width')) {
+        # Oblique bottom-right      
         $canvas->move($heli, $speed, $key_state{'Up'} && $top > 0 ? -$speed : ($bottom < $canvas->cget('-height') ? $speed : 0));
     } elsif ($key_state{'Left'} && $left > 0) {
+        # Oblique bottom-left
         $canvas->move($heli, -$speed, $key_state{'Up'} && $top > 0 ? -$speed : ($bottom < $canvas->cget('-height') ? $speed : 0));
     } else {
         # If the Up key is not pressed, move the shape down
