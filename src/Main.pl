@@ -25,106 +25,55 @@ $obs_1 = $canvas->create('rectangle', 200, 0, 300, 300, -fill => 'firebrick');
 # Obstacle - 02
 $obs_2 = $canvas->create('rectangle', 500, 450, 600, 150, -fill => 'firebrick');
 
-# -------------------------------- Key mapping ------------------------------- #
-$move_step = 10;
-
+# -------------------------------- Movement handling ------------------------------- #
 my @obstacles = (
     $start_pl, $end_pl, $obs_1, $obs_2
 );
 
-# Move up
-$mw->bind('<KeyPress-Up>', sub { 
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
+$speed = 10;
 
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      print("hy1: $hy1 - oy2: $oy2\n");
+# Track the state of the keys
+my %key_state = (
+    'Up' => 0,
+    'Down' => 0,
+    'Right' => 0,
+    'Left' => 0,
+);
 
-      # Block top collision
-      # Allow top move on left & right collision
-      if ($hy2 != ($oy1 + 2) && ($hx1 + 2) < $ox2 && $hx2 != ($ox1 + 2)) {
-        return;
-      }
+# Bind the keys
+$mw->bind('<KeyPress-Up>', sub { $key_state{'Up'} = 1; });
+$mw->bind('<KeyRelease-Up>', sub { $key_state{'Up'} = 0; });
+
+$mw->bind('<KeyPress-Down>', sub { $key_state{'Down'} = 1; });
+$mw->bind('<KeyRelease-Down>', sub { $key_state{'Down'} = 0; });
+
+$mw->bind('<KeyPress-Right>', sub { $key_state{'Right'} = 1; });
+$mw->bind('<KeyRelease-Right>', sub { $key_state{'Right'} = 0; });
+
+$mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
+$mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
+
+# Move the rectangle based on the state of the keys
+$mw->repeat(20, sub {
+    my ($left, $top, $right, $bottom) = $canvas->bbox($heli);
+
+    if ($key_state{'Up'} && $key_state{'Right'} && $top > 0 && $right < $canvas->cget('-width')) {
+        $canvas->move($heli, $speed, -$speed);
+    } elsif ($key_state{'Up'} && $key_state{'Left'} && $top > 0 && $left > 0) {
+        $canvas->move($heli, -$speed, -$speed);
+    } elsif ($key_state{'Up'} && $top > 0) {
+        $canvas->move($heli, 0, -$speed);
+    } elsif ($key_state{'Right'} && $right < $canvas->cget('-width')) {
+        $canvas->move($heli, $speed, $key_state{'Up'} && $top > 0 ? -$speed : ($bottom < $canvas->cget('-height') ? $speed : 0));
+    } elsif ($key_state{'Left'} && $left > 0) {
+        $canvas->move($heli, -$speed, $key_state{'Up'} && $top > 0 ? -$speed : ($bottom < $canvas->cget('-height') ? $speed : 0));
+    } else {
+        # If the Up key is not pressed, move the shape down
+        # but only if it's not at the bottom of the canvas
+        if ($bottom < $canvas->cget('-height')) {
+            $canvas->move($heli, 0, $speed);
+        }
     }
-  }
-
-  if ($y0 + $dy > 0) {
-    $canvas->move($heli, 0, -$move_step);
-  }
-});
-
-# Move left
-$mw->bind('<KeyPress-Left>', sub {  
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-  
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block left collision
-      # Allow left move on bottom & right collision
-      if ($hx1 != $ox2 && $hx2 != ($ox1 + 2) && $hy2 > ($oy1 + 2)) {
-        return;
-      }
-    }
-  }
-  
-  if ($x0 - $move_step > 0) {
-    $canvas->move($heli, -$move_step, 0);
-  }
-});
-
-# Move right
-$mw->bind('<KeyPress-Right>', sub {  
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-    
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block right collision
-      # Allow right move on bottom & left collision
-      if ($hx2 != $ox1 && ($hx1 + 2) < $ox2 && $hy2 > ($oy1 + 2)) {
-        return;
-      }
-    }
-  }
-
-  if ($x0 + $move_step < $canvas->cget(-width) - $block_size) {
-    $canvas->move($heli, $move_step, 0);
-  }
-});
-
-# Auto move down
-$mw->repeat(100 => sub {
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-  
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block bottom collision
-      # Allow bottom move on side collision
-      if (($hx1 + 2) != $ox2 && $hx2 != ($ox1 + 2) && ($hy1 + 2) != $oy2) {
-        return;
-      }
-    }
-  }
-
-  if($y1 < $canvas->cget(-height)) {
-    $canvas->move($heli, 0, 10);
-  }
 });
 
 # ------------------------------------ Run ----------------------------------- #
