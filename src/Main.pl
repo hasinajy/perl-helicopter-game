@@ -30,7 +30,7 @@ my @obstacles = (
     $start_pl, $end_pl, $obs_1, $obs_2
 );
 
-$speed = 10;
+$speed = 5;
 
 # Track the state of the keys
 my %key_state = (
@@ -53,7 +53,7 @@ $mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
 $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
 # Move the rectangle based on the state of the keys
-$mw->repeat(20, sub {
+$mw->repeat(60, sub {
     my ($left, $top, $right, $bottom) = $canvas->bbox($heli);
 
     if ($key_state{'Up'} && $key_state{'Right'} && $top > 0 && $right < $canvas->cget('-width')) {
