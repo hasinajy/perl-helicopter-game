@@ -102,7 +102,11 @@ $mw->repeat(60, sub {
     foreach my $item (@obstacles) {
         my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($item);
         if ($new_hx1 < $ox2 && $new_hx2 > $ox1 && $new_hy1 < $oy2 && $new_hy2 > $oy1) {
-            print "Collision detected with obstacle\n";
+            print("# --- #\n");
+            print("hx1: $new_hx1 - ox2: $ox2\n");
+            print("hx2: $new_hx2 - ox1: $ox1\n");
+            print("hy1: $new_hy1 - oy2: $oy2\n");
+            print("hy2: $new_hy2 - oy1: $oy1\n");
             return;  # Don't move the helicopter
         }
     }
