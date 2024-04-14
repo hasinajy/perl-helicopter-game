@@ -54,31 +54,65 @@ $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
 # Move the rectangle based on the state of the keys
 $mw->repeat(60, sub {
-    my ($left, $top, $right, $bottom) = $canvas->bbox($heli);
+    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
 
-    if ($key_state{'Up'} && $key_state{'Right'} && $top > 0 && $right < $canvas->cget('-width')) {
-        # Oblique top-right
-        $canvas->move($heli, $speed, -$speed);
-    } elsif ($key_state{'Up'} && $key_state{'Left'} && $top > 0 && $left > 0) {
-        # Oblique top-left
-        $canvas->move($heli, -$speed, -$speed);
-    } elsif ($key_state{'Up'} && $top > 0) {
-        # Move top
-        $canvas->move($heli, 0, -$speed);
-    } elsif ($key_state{'Right'} && $right < $canvas->cget('-width')) {
-        # Oblique bottom-right      
-        $canvas->move($heli, $speed, $key_state{'Up'} && $top > 0 ? -$speed : ($bottom < $canvas->cget('-height') ? $speed : 0));
-    } elsif ($key_state{'Left'} && $left > 0) {
-        # Oblique bottom-left
-        $canvas->move($heli, -$speed, $key_state{'Up'} && $top > 0 ? -$speed : ($bottom < $canvas->cget('-height') ? $speed : 0));
+    # Calculate the new position
+    my $new_hx1 = $hx1;
+    my $new_hy1 = $hy1;
+    my $new_hx2 = $hx2;
+    my $new_hy2 = $hy2;
+
+    if ($key_state{'Up'} && $key_state{'Right'} && $hy1 > 0 && $hx2 < $canvas->cget('-width')) {
+        $new_hx1 += $speed;
+        $new_hy1 -= $speed;
+        $new_hx2 += $speed;
+        $new_hy2 -= $speed;
+    } elsif ($key_state{'Up'} && $key_state{'Left'} && $hy1 > 0 && $hx1 > 0) {
+        $new_hx1 -= $speed;
+        $new_hy1 -= $speed;
+        $new_hx2 -= $speed;
+        $new_hy2 -= $speed;
+    } elsif ($key_state{'Up'} && $hy1 > 0) {
+        $new_hy1 -= $speed;
+        $new_hy2 -= $speed;
+    } elsif ($key_state{'Right'} && $hx2 < $canvas->cget('-width')) {
+        $new_hx1 += $speed;
+        $new_hx2 += $speed;
+        if ($hy2 < $canvas->cget('-height')) {
+            $new_hy1 += $speed;
+            $new_hy2 += $speed;
+        }
+    } elsif ($key_state{'Left'} && $hx1 > 0) {
+        $new_hx1 -= $speed;
+        $new_hx2 -= $speed;
+        if ($hy2 < $canvas->cget('-height')) {
+            $new_hy1 += $speed;
+            $new_hy2 += $speed;
+        }
     } else {
         # If the Up key is not pressed, move the shape down
         # but only if it's not at the bottom of the canvas
-        if ($bottom < $canvas->cget('-height')) {
-            $canvas->move($heli, 0, $speed);
+        if ($hy2 < $canvas->cget('-height')) {
+            $new_hy1 += $speed;
+            $new_hy2 += $speed;
         }
     }
+
+    # Check for collisions
+    foreach my $item (@obstacles) {
+        my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($item);
+        if ($new_hx1 < $ox2 && $new_hx2 > $ox1 && $new_hy1 < $oy2 && $new_hy2 > $oy1) {
+            print "Collision detected with obstacle\n";
+            return;  # Don't move the helicopter
+        }
+    }
+
+    # No collisions, so move the helicopter
+    my $dx = $new_hx1 - $hx1;
+    my $dy = $new_hy1 - $hy1;
+    $canvas->move($heli, $dx, $dy);
 });
+
 
 # ------------------------------------ Run ----------------------------------- #
 MainLoop;
