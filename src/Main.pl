@@ -40,16 +40,15 @@ my %key_state = (
     'Left' => 0,
 );
 
-# Bind the keys
+# Move top
 $mw->bind('<KeyPress-Up>', sub { $key_state{'Up'} = 1; });
 $mw->bind('<KeyRelease-Up>', sub { $key_state{'Up'} = 0; });
 
-$mw->bind('<KeyPress-Down>', sub { $key_state{'Down'} = 1; });
-$mw->bind('<KeyRelease-Down>', sub { $key_state{'Down'} = 0; });
-
+# Move right
 $mw->bind('<KeyPress-Right>', sub { $key_state{'Right'} = 1; });
 $mw->bind('<KeyRelease-Right>', sub { $key_state{'Right'} = 0; });
 
+# Move left
 $mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
 $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
