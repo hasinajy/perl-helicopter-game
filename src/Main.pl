@@ -11,11 +11,9 @@ my @obstacles;
 my $mw = MainWindow->new;
 my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'gray75')->pack;
 
-# Load the helicopter image
-my $image = $mw->Photo(-file => "helicopter.gif");
-
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
+my $image = $mw->Photo(-file => "helicopter.gif");
 $heli = $canvas->createImage(25, 275, -image => $image);
 
 # --------------------------- Database integration --------------------------- #
