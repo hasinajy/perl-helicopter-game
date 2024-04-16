@@ -1,6 +1,56 @@
 use Tk;
 use DBI;
 
+# ------------------------------- SAT algorithm ------------------------------ #
+sub dot_product {
+    my ($a, $b) = @_;
+    return $a->[0]*$b->[0] + $a->[1]*$b->[1];
+}
+
+sub subtract {
+    my ($a, $b) = @_;
+    return [$a->[0]-$b->[0], $a->[1]-$b->[1]];
+}
+
+sub perp {
+    my ($a) = @_;
+    return [-$a->[1], $a->[0]];
+}
+
+sub check_collision {
+    my ($poly1, $poly2) = @_;
+
+    foreach my $poly ($poly1, $poly2) {
+        for my $i (0..$#$poly) {
+            my $p1 = $poly->[$i];
+            my $p2 = $poly->[($i+1) % @$poly];
+            my $normal = perp(subtract($p2, $p1));
+
+            my ($minA, $maxA) = (undef, undef);
+            foreach my $p (@$poly1) {
+                my $projection = dot_product($normal, $p);
+                $minA = $projection if !defined($minA) || $projection < $minA;
+                $maxA = $projection if !defined($maxA) || $projection > $maxA;
+            }
+
+            my ($minB, $maxB) = (undef, undef);
+            foreach my $p (@$poly2) {
+                my $projection = dot_product($normal, $p);
+                $minB = $projection if !defined($minB) || $projection < $minB;
+                $maxB = $projection if !defined($maxB) || $projection > $maxB;
+            }
+
+            if ($maxA < $minB || $maxB < $minA) {
+                # No overlap, the polygons are separated
+                return 0;
+            }
+        }
+    }
+
+    # No separating axis found, the polygons are colliding
+    return 1;
+}
+
 # ------------------------------ Space variables ----------------------------- #
 $block_size = 50;
 $width = 800;
@@ -119,13 +169,19 @@ $mw->repeat(60, sub {
 
     # Check for collisions
     foreach my $item (@obstacles) {
-        my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($item);
-        if (($new_hx1 + 2) < $ox2 && $new_hx2 > ($ox1 + 2) && ($new_hy1 + 2) < $oy2 && $new_hy2 > ($oy1 + 2)) {
-            print("# --- #\n");
-            print("hx1: $new_hx1 - ox2: $ox2\n");
-            print("hx2: $new_hx2 - ox1: $ox1\n");
-            print("hy1: $new_hy1 - oy2: $oy2\n");
-            print("hy2: $new_hy2 - oy1: $oy1\n");
+        my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
+        my @obstacle_coords = $canvas->coords($item);
+
+        # Convert the flat lists of coordinates into a list of [x, y] pairs
+        my @heli_vertices = ([$hx1, $hy1], [$hx2, $hy1], [$hx2, $hy2], [$hx1, $hy2]);
+
+        my @obstacle_vertices;
+        for (my $i = 0; $i < $#obstacle_coords; $i += 2) {
+            push @obstacle_vertices, [$obstacle_coords[$i], $obstacle_coords[$i + 1]];
+        }
+        
+        if (check_collision(\@heli_vertices, \@obstacle_vertices)) {
+            print("Collision detected with obstacle\n");
             return;  # Don't move the helicopter
         }
     }
