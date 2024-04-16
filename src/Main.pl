@@ -9,9 +9,13 @@ $height = 450;
 my $mw = MainWindow->new;
 my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'gray75')->pack;
 
+# Load the helicopter image
+my $image = $mw->Photo(-file => "helicopter.gif");
+
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
-$heli = $canvas->create('rectangle', 0, 250, 50, 300, -fill => 'orange');
+# $heli = $canvas->create('rectangle', 0, 250, 50, 300, -fill => 'orange');
+$heli = $canvas->createImage(25, 275, -image => $image);
 
 # Start platform
 $start_pl = $canvas->create('rectangle', 0, 300, 100, 350, -fill => 'blue');
