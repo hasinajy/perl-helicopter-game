@@ -14,7 +14,7 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'g
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
 my $image = $mw->Photo(-file => "helicopter.gif");
-$heli = $canvas->createImage(25, 275, -image => $image);
+$heli = $canvas->createImage(50, 275, -image => $image);
 
 # --------------------------- Database integration --------------------------- #
 # Database connection parameters
