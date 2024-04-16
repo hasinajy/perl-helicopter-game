@@ -1,9 +1,11 @@
 use Tk;
+use DBI;
 
 # ------------------------------ Space variables ----------------------------- #
 $block_size = 50;
 $width = 800;
 $height = 450;
+my @obstacles;
 
 # ------------------------------- Window setup ------------------------------- #
 my $mw = MainWindow->new;
@@ -11,119 +13,129 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'g
 
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
-$heli = $canvas->create('rectangle', 0, 250, 50, 300, -fill => 'orange');
+my $image = $mw->Photo(-file => "helicopter.gif");
+$heli = $canvas->createImage(25, 275, -image => $image);
 
-# Start platform
-$start_pl = $canvas->create('rectangle', 0, 300, 100, 350, -fill => 'blue');
+# --------------------------- Database integration --------------------------- #
+# Database connection parameters
+my $dsn = "DBI:mysql:database=helicopter_game;host=localhost";
+my $username = "root";
+my $password = "";
 
-# End platform
-$end_pl = $canvas->create('rectangle', 700, 100, 800, 150, -fill => 'blue');
+# Connect to the database
+my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 1, AutoCommit => 1 });
 
-# Obstacle - 01
-$obs_1 = $canvas->create('rectangle', 200, 0, 300, 300, -fill => 'firebrick');
+# Prepare and execute the SQL query
+my $sth = $dbh->prepare("SELECT coord_string FROM shape");
+$sth->execute();
 
-# Obstacle - 02
-$obs_2 = $canvas->create('rectangle', 500, 450, 600, 150, -fill => 'firebrick');
+# Fetch the data and create the obstacles
+while (my $row = $sth->fetchrow_hashref) {
+    my $coord_string = $row->{coord_string};
+    my @coords = split /-/, $coord_string;
+    my @polygon_coords;
+    foreach my $coord (@coords) {
+        $coord =~ s/\[|\]//g;  # Remove the brackets
+        my ($x, $y) = split /;/, $coord;
+        push @polygon_coords, $x, $y;
+    }
+    print("\n");
+    # Create the obstacle on the canvas
+    my $obstacle = $canvas->createPolygon(@polygon_coords, -fill => 'firebrick');
+    push @obstacles, $obstacle;
+}
 
-# -------------------------------- Key mapping ------------------------------- #
-$move_step = 10;
+# Disconnect from the database
+$dbh->disconnect();
 
-my @obstacles = (
-    $start_pl, $end_pl, $obs_1, $obs_2
+# -------------------------------- Movement handling ------------------------------- #
+$speed = 5;
+
+# Track the state of the keys
+my %key_state = (
+    'Up' => 0,
+    'Down' => 0,
+    'Right' => 0,
+    'Left' => 0,
 );
 
-# Move up
-$mw->bind('<KeyPress-Up>', sub { 
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block top collision
-      # Allow top move on left & right collision
-      if ($hy2 != ($oy1 + 2) && ($hx1 + 2) < $ox2 && $hx2 != ($ox1 + 2)) {
-        return;
-      }
-    }
-  }
-
-  if ($y0 + $dy > 0) {
-    $canvas->move($heli, 0, -$move_step);
-  }
-});
-
-# Move left
-$mw->bind('<KeyPress-Left>', sub {  
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-  
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block left collision
-      # Allow left move on bottom & right collision
-      if ($hx1 != $ox2 && $hx2 != ($ox1 + 2) && $hy2 > ($oy1 + 2)) {
-        return;
-      }
-    }
-  }
-  
-  if ($x0 - $move_step > 0) {
-    $canvas->move($heli, -$move_step, 0);
-  }
-});
+# Move top
+$mw->bind('<KeyPress-Up>', sub { $key_state{'Up'} = 1; });
+$mw->bind('<KeyRelease-Up>', sub { $key_state{'Up'} = 0; });
 
 # Move right
-$mw->bind('<KeyPress-Right>', sub {  
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-    
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block right collision
-      # Allow right move on bottom & left collision
-      if ($hx2 != $ox1 && ($hx1 + 2) < $ox2 && $hy2 > ($oy1 + 2)) {
-        return;
-      }
-    }
-  }
+$mw->bind('<KeyPress-Right>', sub { $key_state{'Right'} = 1; });
+$mw->bind('<KeyRelease-Right>', sub { $key_state{'Right'} = 0; });
 
-  if ($x0 + $move_step < $canvas->cget(-width) - $block_size) {
-    $canvas->move($heli, $move_step, 0);
-  }
+# Move left
+$mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
+$mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
+
+# Move the rectangle based on the state of the keys
+$mw->repeat(60, sub {
+    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
+
+    # Calculate the new position
+    my $new_hx1 = $hx1;
+    my $new_hy1 = $hy1;
+    my $new_hx2 = $hx2;
+    my $new_hy2 = $hy2;
+
+    if ($key_state{'Up'} && $key_state{'Right'} && $hy1 > 0 && $hx2 < $canvas->cget('-width')) {
+        $new_hx1 += $speed;
+        $new_hy1 -= $speed;
+        $new_hx2 += $speed;
+        $new_hy2 -= $speed;
+    } elsif ($key_state{'Up'} && $key_state{'Left'} && $hy1 > 0 && $hx1 > 0) {
+        $new_hx1 -= $speed;
+        $new_hy1 -= $speed;
+        $new_hx2 -= $speed;
+        $new_hy2 -= $speed;
+    } elsif ($key_state{'Up'} && $hy1 > 0) {
+        $new_hy1 -= $speed;
+        $new_hy2 -= $speed;
+    } elsif ($key_state{'Right'} && $hx2 < $canvas->cget('-width')) {
+        $new_hx1 += $speed;
+        $new_hx2 += $speed;
+        if ($hy2 < $canvas->cget('-height')) {
+            $new_hy1 += $speed;
+            $new_hy2 += $speed;
+        }
+    } elsif ($key_state{'Left'} && $hx1 > 0) {
+        $new_hx1 -= $speed;
+        $new_hx2 -= $speed;
+        if ($hy2 < $canvas->cget('-height')) {
+            $new_hy1 += $speed;
+            $new_hy2 += $speed;
+        }
+    } else {
+        # If the Up key is not pressed, move the shape down
+        # but only if it's not at the bottom of the canvas
+        if ($hy2 < $canvas->cget('-height')) {
+            $new_hy1 += $speed;
+            $new_hy2 += $speed;
+        }
+    }
+
+    # Check for collisions
+    foreach my $item (@obstacles) {
+        my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($item);
+        if (($new_hx1 + 2) < $ox2 && $new_hx2 > ($ox1 + 2) && ($new_hy1 + 2) < $oy2 && $new_hy2 > ($oy1 + 2)) {
+            print("# --- #\n");
+            print("hx1: $new_hx1 - ox2: $ox2\n");
+            print("hx2: $new_hx2 - ox1: $ox1\n");
+            print("hy1: $new_hy1 - oy2: $oy2\n");
+            print("hy2: $new_hy2 - oy1: $oy1\n");
+            return;  # Don't move the helicopter
+        }
+    }
+
+    # No collisions, so move the helicopter
+    my $dx = $new_hx1 - $hx1;
+    my $dy = $new_hy1 - $hy1;
+    $canvas->move($heli, $dx, $dy);
 });
 
-# Auto move down
-$mw->repeat(100 => sub {
-  my ($x0, $y0, $x1, $y1) = $canvas->bbox($heli);
-  
-  # Check for collision
-  foreach my $obstacle (@obstacles) {
-
-    my ($ox1, $oy1, $ox2, $oy2) = $canvas->bbox($obstacle);
-    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-  
-    if ($hx1 < $ox2 && $hx2 > $ox1 && $hy1 < $oy2 && $hy2 > $oy1) {
-      # Block bottom collision
-      # Allow bottom move on side collision
-      if (($hx1 + 2) != $ox2 && $hx2 != ($ox1 + 2) && ($hy1 + 2) != $oy2) {
-        return;
-      }
-    }
-  }
-
-  if($y1 < $canvas->cget(-height)) {
-    $canvas->move($heli, 0, 10);
-  }
-});
 
 # ------------------------------------ Run ----------------------------------- #
 MainLoop;
