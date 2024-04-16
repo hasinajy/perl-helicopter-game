@@ -5,6 +5,7 @@ use DBI;
 $block_size = 50;
 $width = 800;
 $height = 450;
+my @obstacles;
 
 # ------------------------------- Window setup ------------------------------- #
 my $mw = MainWindow->new;
@@ -50,10 +51,6 @@ while (my $row = $sth->fetchrow_hashref) {
 $dbh->disconnect();
 
 # -------------------------------- Movement handling ------------------------------- #
-my @obstacles = (
-    $start_pl, $end_pl, $obs_1, $obs_2
-);
-
 $speed = 5;
 
 # Track the state of the keys
