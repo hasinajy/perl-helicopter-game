@@ -131,64 +131,52 @@ $mw->repeat(60, sub {
     my $new_hx2 = $hx2;
     my $new_hy2 = $hy2;
 
-    if ($key_state{'Up'} && $key_state{'Right'} && $hy1 > 0 && $hx2 < $canvas->cget('-width')) {
-        $new_hx1 += $speed;
-        $new_hy1 -= $speed;
-        $new_hx2 += $speed;
-        $new_hy2 -= $speed;
-    } elsif ($key_state{'Up'} && $key_state{'Left'} && $hy1 > 0 && $hx1 > 0) {
-        $new_hx1 -= $speed;
-        $new_hy1 -= $speed;
-        $new_hx2 -= $speed;
-        $new_hy2 -= $speed;
-    } elsif ($key_state{'Up'} && $hy1 > 0) {
-        $new_hy1 -= $speed;
-        $new_hy2 -= $speed;
-    } elsif ($key_state{'Right'} && $hx2 < $canvas->cget('-width')) {
-        $new_hx1 += $speed;
-        $new_hx2 += $speed;
-        if ($hy2 < $canvas->cget('-height')) {
-            $new_hy1 += $speed;
-            $new_hy2 += $speed;
-        }
-    } elsif ($key_state{'Left'} && $hx1 > 0) {
-        $new_hx1 -= $speed;
-        $new_hx2 -= $speed;
-        if ($hy2 < $canvas->cget('-height')) {
-            $new_hy1 += $speed;
-            $new_hy2 += $speed;
-        }
-    } else {
-        # If the Up key is not pressed, move the shape down
-        # but only if it's not at the bottom of the canvas
-        if ($hy2 < $canvas->cget('-height')) {
-            $new_hy1 += $speed;
-            $new_hy2 += $speed;
-        }
+    # Calculate the potential movement in each direction
+    my $dx = 0;
+    my $dy = 0;
+
+    if ($key_state{'Up'} && $hy1 > 0) {
+        $dy -= $speed;
+    }
+    if ($key_state{'Right'} && $hx2 < $canvas->cget('-width')) {
+        $dx += $speed;
+    }
+    if ($key_state{'Left'} && $hx1 > 0) {
+        $dx -= $speed;
+    }
+    if (!$key_state{'Up'} && $hy2 < $canvas->cget('-height')) {
+        $dy += $speed;
     }
 
-    # Check for collisions
+    # Check for collisions in the new position
     foreach my $item (@obstacles) {
-        my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
         my @obstacle_coords = $canvas->coords($item);
 
         # Convert the flat lists of coordinates into a list of [x, y] pairs
-        my @heli_vertices = ([$hx1, $hy1], [$hx2, $hy1], [$hx2, $hy2], [$hx1, $hy2]);
+        my @heli_vertices_h = ([$hx1 + $dx, $hy1], [$hx2 + $dx, $hy1], [$hx2 + $dx, $hy2], [$hx1 + $dx, $hy2]);
+        my @heli_vertices_v = ([$hx1, $hy1 + $dy], [$hx2, $hy1 + $dy], [$hx2, $hy2 + $dy], [$hx1, $hy2 + $dy]);
 
         my @obstacle_vertices;
         for (my $i = 0; $i < $#obstacle_coords; $i += 2) {
             push @obstacle_vertices, [$obstacle_coords[$i], $obstacle_coords[$i + 1]];
         }
-        
-        if (check_collision(\@heli_vertices, \@obstacle_vertices)) {
-            print("Collision detected with obstacle\n");
-            return;  # Don't move the helicopter
+
+        # Check for collisions separately for horizontal and vertical movements
+        if (check_collision(\@heli_vertices_h, \@obstacle_vertices)) {
+            print("Horizontal collision detected with obstacle\n");
+            # If there's a collision, don't move horizontally
+            if ($dx > 0) { $dx = 0; }
+            if ($dx < 0) { $dx = 0; }
+        }
+        if (check_collision(\@heli_vertices_v, \@obstacle_vertices)) {
+            print("Vertical collision detected with obstacle\n");
+            # If there's a collision, don't move vertically
+            if ($dy > 0) { $dy = 0; }
+            if ($dy < 0) { $dy = 0; }
         }
     }
 
-    # No collisions, so move the helicopter
-    my $dx = $new_hx1 - $hx1;
-    my $dy = $new_hy1 - $hy1;
+    # Move the helicopter
     $canvas->move($heli, $dx, $dy);
 });
 
