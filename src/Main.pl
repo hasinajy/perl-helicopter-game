@@ -1,4 +1,5 @@
 use Tk;
+use DBI;
 
 # ------------------------------ Space variables ----------------------------- #
 $block_size = 50;
@@ -14,20 +15,39 @@ my $image = $mw->Photo(-file => "helicopter.gif");
 
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
-# $heli = $canvas->create('rectangle', 0, 250, 50, 300, -fill => 'orange');
 $heli = $canvas->createImage(25, 275, -image => $image);
 
-# Start platform
-$start_pl = $canvas->create('rectangle', 0, 300, 100, 350, -fill => 'blue');
+# --------------------------- Database integration --------------------------- #
+# Database connection parameters
+my $dsn = "DBI:mysql:database=helicopter_game;host=localhost";
+my $username = "root";
+my $password = "";
 
-# End platform
-$end_pl = $canvas->create('rectangle', 700, 100, 800, 150, -fill => 'blue');
+# Connect to the database
+my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 1, AutoCommit => 1 });
 
-# Obstacle - 01
-$obs_1 = $canvas->create('rectangle', 200, 0, 300, 300, -fill => 'firebrick');
+# Prepare and execute the SQL query
+my $sth = $dbh->prepare("SELECT coord_string FROM shape");
+$sth->execute();
 
-# Obstacle - 02
-$obs_2 = $canvas->create('rectangle', 500, 450, 600, 150, -fill => 'firebrick');
+# Fetch the data and create the obstacles
+while (my $row = $sth->fetchrow_hashref) {
+    my $coord_string = $row->{coord_string};
+    my @coords = split /-/, $coord_string;
+    my @polygon_coords;
+    foreach my $coord (@coords) {
+        $coord =~ s/\[|\]//g;  # Remove the brackets
+        my ($x, $y) = split /;/, $coord;
+        push @polygon_coords, $x, $y;
+    }
+    print("\n");
+    # Create the obstacle on the canvas
+    my $obstacle = $canvas->createPolygon(@polygon_coords, -fill => 'firebrick');
+    push @obstacles, $obstacle;
+}
+
+# Disconnect from the database
+$dbh->disconnect();
 
 # -------------------------------- Movement handling ------------------------------- #
 my @obstacles = (
