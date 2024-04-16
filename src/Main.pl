@@ -1,60 +1,11 @@
 use Tk;
 use DBI;
-
-# ------------------------------- SAT algorithm ------------------------------ #
-sub dot_product {
-    my ($a, $b) = @_;
-    return $a->[0]*$b->[0] + $a->[1]*$b->[1];
-}
-
-sub subtract {
-    my ($a, $b) = @_;
-    return [$a->[0]-$b->[0], $a->[1]-$b->[1]];
-}
-
-sub perp {
-    my ($a) = @_;
-    return [-$a->[1], $a->[0]];
-}
-
-sub check_collision {
-    my ($poly1, $poly2) = @_;
-
-    foreach my $poly ($poly1, $poly2) {
-        for my $i (0..$#$poly) {
-            my $p1 = $poly->[$i];
-            my $p2 = $poly->[($i+1) % @$poly];
-            my $normal = perp(subtract($p2, $p1));
-
-            my ($minA, $maxA) = (undef, undef);
-            foreach my $p (@$poly1) {
-                my $projection = dot_product($normal, $p);
-                $minA = $projection if !defined($minA) || $projection < $minA;
-                $maxA = $projection if !defined($maxA) || $projection > $maxA;
-            }
-
-            my ($minB, $maxB) = (undef, undef);
-            foreach my $p (@$poly2) {
-                my $projection = dot_product($normal, $p);
-                $minB = $projection if !defined($minB) || $projection < $minB;
-                $maxB = $projection if !defined($maxB) || $projection > $maxB;
-            }
-
-            if ($maxA < $minB || $maxB < $minA) {
-                # No overlap, the polygons are separated
-                return 0;
-            }
-        }
-    }
-
-    # No separating axis found, the polygons are colliding
-    return 1;
-}
+require 'SAT_Algorithm.pl';  # Include the SAT algorithm functions
 
 # ------------------------------ Space variables ----------------------------- #
-$block_size = 50;
-$width = 800;
-$height = 450;
+my $block_size = 50;
+my $width = 800;
+my $height = 450;
 my @obstacles;
 
 # ------------------------------- Window setup ------------------------------- #
@@ -64,7 +15,7 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'g
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
 my $image = $mw->Photo(-file => "helicopter.gif");
-$heli = $canvas->createImage(50, 275, -image => $image);
+my $heli = $canvas->createImage(50, 275, -image => $image);
 
 # --------------------------- Database integration --------------------------- #
 # Database connection parameters
@@ -89,7 +40,6 @@ while (my $row = $sth->fetchrow_hashref) {
         my ($x, $y) = split /;/, $coord;
         push @polygon_coords, $x, $y;
     }
-    print("\n");
     # Create the obstacle on the canvas
     my $obstacle = $canvas->createPolygon(@polygon_coords, -fill => 'firebrick');
     push @obstacles, $obstacle;
@@ -99,7 +49,7 @@ while (my $row = $sth->fetchrow_hashref) {
 $dbh->disconnect();
 
 # -------------------------------- Movement handling ------------------------------- #
-$speed = 5;
+my $speed = 5;
 
 # Track the state of the keys
 my %key_state = (
@@ -179,7 +129,6 @@ $mw->repeat(60, sub {
     # Move the helicopter
     $canvas->move($heli, $dx, $dy);
 });
-
 
 # ------------------------------------ Run ----------------------------------- #
 MainLoop;
