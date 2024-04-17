@@ -15,7 +15,7 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'g
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
 my $image = $mw->Photo(-file => "helicopter.gif");
-my $heli = $canvas->createImage(50, 275, -image => $image);
+my $heli = $canvas->createImage(50, 575, -image => $image);
 
 # Take-off platform
 my @takeoff_coords = ((0, 600), (100, 600), (100, 650), (0, 650));
