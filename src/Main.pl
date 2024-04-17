@@ -83,7 +83,13 @@ $mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
 $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
 # Move the rectangle based on the state of the keys
-$mw->repeat(60, sub {
+# Add a boolean variable to track if the game is won
+my $game_won = 0;
+
+# Add a boolean variable to track if the message box has been shown
+my $message_shown = 0;
+
+my $repeat_id = $mw->repeat(60, sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
 
     # Calculate the new position
@@ -139,6 +145,24 @@ $mw->repeat(60, sub {
 
     # Move the helicopter
     $canvas->move($heli, $dx, $dy);
+
+    # Check if the helicopter is within the landing platform
+    if ($hx1 >= 700 && $hx2 <= 800 && ($hy2 + 2) == 100) {
+        print("Game won!\n");
+        $game_won = 1;  # Set the game as won
+        $mw->afterCancel($repeat_id);  # Stop the animation
+    }
+
+    # Winning screen
+    if ($game_won && !$message_shown) {
+        $message_shown = 1;  # Set the message box as shown
+        my $response = $mw->messageBox(-message => "You won. Play again?", -type => "YesNo", -icon => "question");
+        if ($response eq 'Yes') {
+            exec($^X, $0);  # Replay
+        } else {
+            exit;  # Stop the entire program
+        }
+    }
 });
 
 # ------------------------------------ Run ----------------------------------- #
