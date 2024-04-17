@@ -5,7 +5,7 @@ require 'SAT_Algorithm.pl';  # Include the SAT algorithm functions
 # ------------------------------ Space variables ----------------------------- #
 my $block_size = 50;
 my $width = 800;
-my $height = 450;
+my $height = 800;
 my @obstacles;
 
 # ------------------------------- Window setup ------------------------------- #
