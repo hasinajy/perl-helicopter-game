@@ -83,6 +83,15 @@ $mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
 $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
 # Move the rectangle based on the state of the keys
+# Add a score variable
+my $score = 0;
+
+# Create a text item in the bottom right corner of the canvas to display the score
+my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill => 'black');
+
+# Add a hash to keep track of passed obstacles
+my %passed_obstacles;
+
 # Add a boolean variable to track if the game is won
 my $game_won = 0;
 
@@ -145,6 +154,31 @@ my $repeat_id = $mw->repeat(60, sub {
 
     # Move the helicopter
     $canvas->move($heli, $dx, $dy);
+
+    # Check if the helicopter has passed an obstacle
+    foreach my $item (@obstacles) {
+        # Skip the platforms
+        next if $item == $takeoff_platform || $item == $landing_platform;
+
+        my @obstacle_coords = $canvas->coords($item);
+        my ($ox1, $oy1, $ox2, $oy2) = @obstacle_coords[0..3];  # Get the top left corner of the obstacle
+
+        # If the helicopter is to the right of the obstacle and the obstacle has not been passed before
+        if ($hx1 > $ox2 && !$passed_obstacles{$item}) {
+            # Mark the obstacle as passed
+            $passed_obstacles{$item} = 1;
+
+            # If the top of the obstacle is within 75 pixels of the top of the frame
+            if ($oy1 <= 75) {
+                $score += 4;
+            } else {
+                $score += 2;
+            }
+
+            # Update the score display
+            $canvas->itemconfigure($score_text, -text => "Score: $score");
+        }
+    }
 
     # Check if the helicopter is within the landing platform
     if ($hx1 >= 700 && $hx2 <= 800 && ($hy2 + 2) == 100) {
