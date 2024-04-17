@@ -124,13 +124,13 @@ $mw->repeat(60, sub {
 
         # Check for collisions separately for horizontal and vertical movements
         if (check_collision(\@heli_vertices_h, \@obstacle_vertices)) {
-            print("Horizontal collision detected with obstacle\n");
+            # print("Horizontal collision detected with obstacle\n");
             # If there's a collision, don't move horizontally
             if ($dx > 0) { $dx = 0; }
             if ($dx < 0) { $dx = 0; }
         }
         if (check_collision(\@heli_vertices_v, \@obstacle_vertices)) {
-            print("Vertical collision detected with obstacle\n");
+            # print("Vertical collision detected with obstacle\n");
             # If there's a collision, don't move vertically
             if ($dy > 0) { $dy = 0; }
             if ($dy < 0) { $dy = 0; }
