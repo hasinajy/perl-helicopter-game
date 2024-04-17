@@ -12,6 +12,7 @@ my $game_won = 0;
 my $message_shown = 0;
 
 # ------------------------------ Space variables ----------------------------- #
+my $heli_height = 25;
 my $block_size = 50;
 my $width = 800;
 my $height = 800;
@@ -152,7 +153,7 @@ my $repeat_id = $mw->repeat(60, sub {
     # Move the helicopter
     $canvas->move($heli, $dx, $dy);
 
-    # Check if the helicopter has passed an obstacle
+    # Score tracker - Increment on passed obstacles
     foreach my $item (@obstacles) {
         # Skip the platforms
         next if $item == $takeoff_platform || $item == $landing_platform;
@@ -166,7 +167,7 @@ my $repeat_id = $mw->repeat(60, sub {
             $passed_obstacles{$item} = 1;
 
             # Increment score based on gap size
-            if ($oy1 <= 75) {
+            if ($oy1 <= 3 * $heli_height) {
                 $score += 4;
             } else {
                 $score += 2;
