@@ -1,6 +1,15 @@
 use Tk;
 use DBI;
-require 'SAT_Algorithm.pl';  # Include the SAT algorithm functions
+require 'SAT_Algorithm.pl';
+
+# ------------------------------ Game variables ------------------------------ #
+my $score = 0;
+
+# Add a boolean variable to track if the game is won
+my $game_won = 0;
+
+# Add a boolean variable to track if the message box has been shown
+my $message_shown = 0;
 
 # ------------------------------ Space variables ----------------------------- #
 my $block_size = 50;
@@ -11,6 +20,9 @@ my @obstacles;
 # ------------------------------- Window setup ------------------------------- #
 my $mw = MainWindow->new;
 my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'gray75')->pack;
+
+# Score display - Bottom right
+my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill => 'black');
 
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
@@ -82,22 +94,10 @@ $mw->bind('<KeyRelease-Right>', sub { $key_state{'Right'} = 0; });
 $mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
 $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
-# Move the rectangle based on the state of the keys
-# Add a score variable
-my $score = 0;
-
-# Create a text item in the bottom right corner of the canvas to display the score
-my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill => 'black');
-
 # Add a hash to keep track of passed obstacles
 my %passed_obstacles;
 
-# Add a boolean variable to track if the game is won
-my $game_won = 0;
-
-# Add a boolean variable to track if the message box has been shown
-my $message_shown = 0;
-
+# Move the rectangle based on the state of the keys
 my $repeat_id = $mw->repeat(60, sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
 
@@ -128,7 +128,6 @@ my $repeat_id = $mw->repeat(60, sub {
     foreach my $item (@obstacles) {
         my @obstacle_coords = $canvas->coords($item);
 
-        # Convert the flat lists of coordinates into a list of [x, y] pairs
         my @heli_vertices_h = ([$hx1 + $dx, $hy1], [$hx2 + $dx, $hy1], [$hx2 + $dx, $hy2], [$hx1 + $dx, $hy2]);
         my @heli_vertices_v = ([$hx1, $hy1 + $dy], [$hx2, $hy1 + $dy], [$hx2, $hy2 + $dy], [$hx1, $hy2 + $dy]);
 
@@ -139,13 +138,11 @@ my $repeat_id = $mw->repeat(60, sub {
 
         # Check for collisions separately for horizontal and vertical movements
         if (check_collision(\@heli_vertices_h, \@obstacle_vertices)) {
-            # print("Horizontal collision detected with obstacle\n");
             # If there's a collision, don't move horizontally
             if ($dx > 0) { $dx = 0; }
             if ($dx < 0) { $dx = 0; }
         }
         if (check_collision(\@heli_vertices_v, \@obstacle_vertices)) {
-            # print("Vertical collision detected with obstacle\n");
             # If there's a collision, don't move vertically
             if ($dy > 0) { $dy = 0; }
             if ($dy < 0) { $dy = 0; }
@@ -163,27 +160,25 @@ my $repeat_id = $mw->repeat(60, sub {
         my @obstacle_coords = $canvas->coords($item);
         my ($ox1, $oy1, $ox2, $oy2) = @obstacle_coords[0..3];  # Get the top left corner of the obstacle
 
-        # If the helicopter is to the right of the obstacle and the obstacle has not been passed before
+        # Pass check: checks for the left side of the helicopter
         if ($hx1 > $ox2 && !$passed_obstacles{$item}) {
             # Mark the obstacle as passed
             $passed_obstacles{$item} = 1;
 
-            # If the top of the obstacle is within 75 pixels of the top of the frame
+            # Increment score based on gap size
             if ($oy1 <= 75) {
                 $score += 4;
             } else {
                 $score += 2;
             }
 
-            # Update the score display
             $canvas->itemconfigure($score_text, -text => "Score: $score");
         }
     }
 
     # Check if the helicopter is within the landing platform
     if ($hx1 >= 700 && $hx2 <= 800 && ($hy2 + 2) == 100) {
-        print("Game won!\n");
-        $game_won = 1;  # Set the game as won
+        $game_won = 1;
         $mw->afterCancel($repeat_id);  # Stop the animation
     }
 
