@@ -18,7 +18,7 @@ my $image = $mw->Photo(-file => "helicopter.gif");
 my $heli = $canvas->createImage(50, 275, -image => $image);
 
 # Take-off platform
-my @takeoff_coords = ((0, 300), (100, 300), (100, 350), (0, 350));
+my @takeoff_coords = ((0, 600), (100, 600), (100, 650), (0, 650));
 $takeoff_platform = $canvas->createPolygon(@takeoff_coords, -fill => 'green');
 
 # Landing platform
