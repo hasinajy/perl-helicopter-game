@@ -1,21 +1,45 @@
 use Tk;
 use DBI;
-require 'SAT_Algorithm.pl';  # Include the SAT algorithm functions
+require 'SAT_Algorithm.pl';
+
+# ------------------------------ Game variables ------------------------------ #
+my $score = 0;
+
+# Add a boolean variable to track if the game is won
+my $game_won = 0;
+
+# Add a boolean variable to track if the message box has been shown
+my $message_shown = 0;
 
 # ------------------------------ Space variables ----------------------------- #
+my $heli_height = 25;
 my $block_size = 50;
 my $width = 800;
-my $height = 450;
+my $height = 800;
 my @obstacles;
 
 # ------------------------------- Window setup ------------------------------- #
 my $mw = MainWindow->new;
-my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'gray75')->pack;
+my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'white')->pack;
+
+# Score display - Bottom right
+my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill => 'black');
 
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
 my $image = $mw->Photo(-file => "helicopter.gif");
-my $heli = $canvas->createImage(50, 275, -image => $image);
+my $heli = $canvas->createImage(50, 575, -image => $image);
+
+# Take-off platform
+my @takeoff_coords = ((0, 600), (100, 600), (100, 650), (0, 650));
+$takeoff_platform = $canvas->createPolygon(@takeoff_coords, -fill => 'skyblue');
+
+# Landing platform
+my @landing_coords = ((700, 100), (800, 100), (800, 150), (700, 150));
+$landing_platform = $canvas->createPolygon(@landing_coords, -fill => 'skyblue');
+
+push @obstacles, $takeoff_platform;
+push @obstacles, $landing_platform;
 
 # --------------------------- Database integration --------------------------- #
 # Database connection parameters
@@ -71,8 +95,11 @@ $mw->bind('<KeyRelease-Right>', sub { $key_state{'Right'} = 0; });
 $mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
 $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
+# Add a hash to keep track of passed obstacles
+my %passed_obstacles;
+
 # Move the rectangle based on the state of the keys
-$mw->repeat(60, sub {
+my $repeat_id = $mw->repeat(60, sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
 
     # Calculate the new position
@@ -102,7 +129,6 @@ $mw->repeat(60, sub {
     foreach my $item (@obstacles) {
         my @obstacle_coords = $canvas->coords($item);
 
-        # Convert the flat lists of coordinates into a list of [x, y] pairs
         my @heli_vertices_h = ([$hx1 + $dx, $hy1], [$hx2 + $dx, $hy1], [$hx2 + $dx, $hy2], [$hx1 + $dx, $hy2]);
         my @heli_vertices_v = ([$hx1, $hy1 + $dy], [$hx2, $hy1 + $dy], [$hx2, $hy2 + $dy], [$hx1, $hy2 + $dy]);
 
@@ -113,13 +139,11 @@ $mw->repeat(60, sub {
 
         # Check for collisions separately for horizontal and vertical movements
         if (check_collision(\@heli_vertices_h, \@obstacle_vertices)) {
-            print("Horizontal collision detected with obstacle\n");
             # If there's a collision, don't move horizontally
             if ($dx > 0) { $dx = 0; }
             if ($dx < 0) { $dx = 0; }
         }
         if (check_collision(\@heli_vertices_v, \@obstacle_vertices)) {
-            print("Vertical collision detected with obstacle\n");
             # If there's a collision, don't move vertically
             if ($dy > 0) { $dy = 0; }
             if ($dy < 0) { $dy = 0; }
@@ -128,6 +152,47 @@ $mw->repeat(60, sub {
 
     # Move the helicopter
     $canvas->move($heli, $dx, $dy);
+
+    # Score tracker - Increment on passed obstacles
+    foreach my $item (@obstacles) {
+        # Skip the platforms
+        next if $item == $takeoff_platform || $item == $landing_platform;
+
+        my @obstacle_coords = $canvas->coords($item);
+        my ($ox1, $oy1, $ox2, $oy2) = @obstacle_coords[0..3];  # Get the top left corner of the obstacle
+
+        # Pass check: checks for the left side of the helicopter
+        if ($hx1 > $ox2 && !$passed_obstacles{$item}) {
+            # Mark the obstacle as passed
+            $passed_obstacles{$item} = 1;
+
+            # Increment score based on gap size
+            if ($oy1 <= 3 * $heli_height) {
+                $score += 4;
+            } else {
+                $score += 2;
+            }
+
+            $canvas->itemconfigure($score_text, -text => "Score: $score");
+        }
+    }
+
+    # Check if the helicopter is within the landing platform
+    if ($hx1 >= 700 && $hx2 <= 800 && ($hy2 + 2) == 100) {
+        $game_won = 1;
+        $mw->afterCancel($repeat_id);  # Stop the animation
+    }
+
+    # Winning screen
+    if ($game_won && !$message_shown) {
+        $message_shown = 1;  # Set the message box as shown
+        my $response = $mw->messageBox(-message => "You won. Play again?", -type => "YesNo", -icon => "question");
+        if ($response eq 'Yes') {
+            exec($^X, $0);  # Replay
+        } else {
+            exit;  # Stop the entire program
+        }
+    }
 });
 
 # ------------------------------------ Run ----------------------------------- #
