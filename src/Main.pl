@@ -19,7 +19,7 @@ my @obstacles;
 
 # ------------------------------- Window setup ------------------------------- #
 my $mw = MainWindow->new;
-my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'gray75')->pack;
+my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'white')->pack;
 
 # Score display - Bottom right
 my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill => 'black');
@@ -31,11 +31,11 @@ my $heli = $canvas->createImage(50, 575, -image => $image);
 
 # Take-off platform
 my @takeoff_coords = ((0, 600), (100, 600), (100, 650), (0, 650));
-$takeoff_platform = $canvas->createPolygon(@takeoff_coords, -fill => 'green');
+$takeoff_platform = $canvas->createPolygon(@takeoff_coords, -fill => 'skyblue');
 
 # Landing platform
 my @landing_coords = ((700, 100), (800, 100), (800, 150), (700, 150));
-$landing_platform = $canvas->createPolygon(@landing_coords, -fill => 'purple');
+$landing_platform = $canvas->createPolygon(@landing_coords, -fill => 'skyblue');
 
 push @obstacles, $takeoff_platform;
 push @obstacles, $landing_platform;
