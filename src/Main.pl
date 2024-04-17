@@ -17,6 +17,17 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'g
 my $image = $mw->Photo(-file => "helicopter.gif");
 my $heli = $canvas->createImage(50, 275, -image => $image);
 
+# Take-off platform
+my @takeoff_coords = ((0, 300), (100, 300), (100, 350), (0, 350));
+$takeoff_platform = $canvas->createPolygon(@takeoff_coords, -fill => 'green');
+
+# Landing platform
+my @landing_coords = ((700, 100), (800, 100), (800, 150), (700, 150));
+$landing_platform = $canvas->createPolygon(@landing_coords, -fill => 'purple');
+
+push @obstacles, $takeoff_platform;
+push @obstacles, $landing_platform;
+
 # --------------------------- Database integration --------------------------- #
 # Database connection parameters
 my $dsn = "DBI:mysql:database=helicopter_game;host=localhost";
