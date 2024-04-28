@@ -165,6 +165,20 @@ my $repeat_id = $mw->repeat(60, sub {
             $canvas->delete($bomb);
             @bombs = grep { $_ != $bomb } @bombs;
         }
+
+        # Check for collisions with other bombs
+        foreach my $other_bomb (@bombs) {
+            next if $bomb == $other_bomb;  # Skip self
+            my ($obx1, $oby1, $obx2, $oby2) = $canvas->bbox($other_bomb);
+            my @bomb_vertices = ([$bx1, $by1], [$bx2, $by1], [$bx2, $by2], [$bx1, $by2]);
+            my @other_bomb_vertices = ([$obx1, $oby1], [$obx2, $oby1], [$obx2, $oby2], [$obx1, $oby2]);
+            if (check_collision(\@bomb_vertices, \@other_bomb_vertices)) {
+                # If there's a collision, delete both bombs
+                $canvas->delete($bomb);
+                $canvas->delete($other_bomb);
+                @bombs = grep { $_ != $bomb && $_ != $other_bomb } @bombs;
+            }
+        }
     }
 
     # Check for collisions in the new position
