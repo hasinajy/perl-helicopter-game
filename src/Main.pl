@@ -17,6 +17,9 @@ my $bomb;
 # Add a variable to track the bombs
 my @bombs;
 
+# Add a variable to track the tanks and their scores
+my @tanks;
+
 # ------------------------------ Space variables ----------------------------- #
 my $heli_height = 25;
 my $block_size = 50;
@@ -94,6 +97,8 @@ while (my $row = $sth_tanks->fetchrow_hashref) {
     my $tank = $canvas->createPolygon(@polygon_coords, -fill => 'black');
     # Display the score inside the tank
     my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] + 10, -text => $score, -fill => 'white');
+    # Store the tank and its score in the @tanks array
+    push @tanks, { tank => $tank, score => $score_text };
 }
 
 # Disconnect from the database
@@ -201,6 +206,13 @@ my $repeat_id = $mw->repeat(60, sub {
             }
         }
     }
+
+    # Move the tanks
+    foreach my $tank (@tanks) {
+        $canvas->move($tank->{tank}, $speed, 0);
+        $canvas->move($tank->{score}, $speed, 0);
+    }
+
 
     # Check for collisions in the new position
     foreach my $item (@obstacles) {
