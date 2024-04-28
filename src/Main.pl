@@ -219,6 +219,22 @@ my $repeat_id = $mw->repeat(60, sub {
             $dx *= -1;
         }
 
+            # Check for collisions with the obstacles
+        foreach my $item (@obstacles) {
+            my @obstacle_coords = $canvas->coords($item);
+            my @tank_vertices = ([$tx1 + $dx, $ty1], [$tx2 + $dx, $ty1], [$tx2 + $dx, $ty2], [$tx1 + $dx, $ty2]);
+            my @obstacle_vertices;
+            for (my $i = 0; $i < $#obstacle_coords; $i += 2) {
+                push @obstacle_vertices, [$obstacle_coords[$i], $obstacle_coords[$i + 1]];
+            }
+            if (check_collision(\@tank_vertices, \@obstacle_vertices)) {
+                # If there's a collision, reverse the direction
+                $tank->{direction} *= -1;
+                $dx *= -1;
+                last;
+            }
+        }
+
         # Move the tank and its score text
         $canvas->move($tank->{tank}, $dx, 0);
         $canvas->move($tank->{score_text}, $dx, 0);
