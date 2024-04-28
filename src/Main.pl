@@ -172,6 +172,21 @@ my $repeat_id = $mw->repeat(60, sub {
         $canvas->move($bomb, 0, $speed);
         my ($bx1, $by1, $bx2, $by2) = $canvas->bbox($bomb);
 
+        # Check for collisions with the tanks
+        foreach my $tank (@tanks) {
+            my ($tx1, $ty1, $tx2, $ty2) = $canvas->bbox($tank->{tank});
+            my @bomb_vertices = ([$bx1, $by1], [$bx2, $by1], [$bx2, $by2], [$bx1, $by2]);
+            my @tank_vertices = ([$tx1, $ty1], [$tx2, $ty1], [$tx2, $ty2], [$tx1, $ty2]);
+            if (check_collision(\@bomb_vertices, \@tank_vertices)) {
+                # If there's a collision, delete the bomb and the tank
+                $canvas->delete($bomb);
+                $canvas->delete($tank->{tank});
+                $canvas->delete($tank->{score_text});
+                @bombs = grep { $_ != $bomb } @bombs;
+                @tanks = grep { $_->{tank} != $tank->{tank} } @tanks;
+            }
+        }
+
         # Check for collisions with the obstacles
         foreach my $item (@obstacles) {
             my @obstacle_coords = $canvas->coords($item);
