@@ -98,7 +98,7 @@ while (my $row = $sth_tanks->fetchrow_hashref) {
     # Display the score inside the tank
     my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] + 10, -text => $score, -fill => 'white');
     # Store the tank and its score text in a hash
-    push @tanks, { tank => $tank, score_text => $score_text, direction => 1 };
+    push @tanks, { tank => $tank, score => $score, score_text => $score_text, direction => 1 };
 }
 
 # Disconnect from the database
@@ -178,12 +178,15 @@ my $repeat_id = $mw->repeat(60, sub {
             my @bomb_vertices = ([$bx1, $by1], [$bx2, $by1], [$bx2, $by2], [$bx1, $by2]);
             my @tank_vertices = ([$tx1, $ty1], [$tx2, $ty1], [$tx2, $ty2], [$tx1, $ty2]);
             if (check_collision(\@bomb_vertices, \@tank_vertices)) {
-                # If there's a collision, delete the bomb and the tank
+                $score += $tank->{score};
+                
                 $canvas->delete($bomb);
                 $canvas->delete($tank->{tank});
                 $canvas->delete($tank->{score_text});
                 @bombs = grep { $_ != $bomb } @bombs;
                 @tanks = grep { $_->{tank} != $tank->{tank} } @tanks;
+
+                $canvas->itemconfigure($score_text, -text => "Score: $score");
             }
         }
 
