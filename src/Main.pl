@@ -3,26 +3,21 @@ use DBI;
 require 'SAT_Algorithm.pl';
 
 # ------------------------------ Game variables ------------------------------ #
+# Variable to track the displayed score
 my $score = 0;
 
-# Add a boolean variable to track if the game is won
-my $game_won = 0;
-
-# Add a boolean variable to track if the message box has been shown
-my $message_shown = 0;
-
-# Add a variable to track the bomb
-my $bomb;
-
-# Add a variable to track the bombs
+# Variable to track the bombs
 my @bombs;
 
-# Add a variable to track the tanks and their scores
+# Variable to track the tanks and their scores
 my @tanks;
+
+# Boolean variables
+my $game_won = 0;
+my $message_shown = 0;
 
 # ------------------------------ Space variables ----------------------------- #
 my $heli_height = 25;
-my $block_size = 50;
 my $width = 800;
 my $height = 800;
 my @obstacles;
@@ -51,15 +46,13 @@ push @obstacles, $takeoff_platform;
 push @obstacles, $landing_platform;
 
 # --------------------------- Database integration --------------------------- #
-# Database connection parameters
 my $dsn = "DBI:mysql:database=helicopter_game;host=localhost";
 my $username = "root";
 my $password = "";
 
-# Connect to the database
 my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 1, AutoCommit => 1 });
 
-# Prepare and execute the SQL query
+# Prepare and execute the SQL query for shapes
 my $sth = $dbh->prepare("SELECT coord_string FROM shape");
 $sth->execute();
 
@@ -68,11 +61,13 @@ while (my $row = $sth->fetchrow_hashref) {
     my $coord_string = $row->{coord_string};
     my @coords = split /-/, $coord_string;
     my @polygon_coords;
+
     foreach my $coord (@coords) {
         $coord =~ s/\[|\]//g;  # Remove the brackets
         my ($x, $y) = split /;/, $coord;
         push @polygon_coords, $x, $y;
     }
+
     # Create the obstacle on the canvas
     my $obstacle = $canvas->createPolygon(@polygon_coords, -fill => 'firebrick');
     push @obstacles, $obstacle;
@@ -88,25 +83,31 @@ while (my $row = $sth_tanks->fetchrow_hashref) {
     my $score = $row->{score};
     my @coords = split /-/, $coord_string;
     my @polygon_coords;
+
     foreach my $coord (@coords) {
         $coord =~ s/\[|\]//g;  # Remove the brackets
         my ($x, $y) = split /;/, $coord;
         push @polygon_coords, $x, $y;
     }
+
     # Create the tank on the canvas
     my $tank = $canvas->createPolygon(@polygon_coords, -fill => 'black');
+    
     # Display the score inside the tank
     my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] + 10, -text => $score, -fill => 'white');
+    
     # Store the tank and its score text in a hash
     push @tanks, { tank => $tank, score => $score, score_text => $score_text, direction => 1 };
 }
 
-# Disconnect from the database
 $dbh->disconnect();
 
-# -------------------------------- Movement handling ------------------------------- #
+# -------------------------------- Key mapping ------------------------------- #
 my $speed = 5;
 my $tank_speed = 1;
+
+# Hash to keep track of passed obstacles
+my %passed_obstacles;
 
 # Track the state of the keys
 my %key_state = (
@@ -129,18 +130,14 @@ $mw->bind('<KeyRelease-Right>', sub { $key_state{'Right'} = 0; });
 $mw->bind('<KeyPress-Left>', sub { $key_state{'Left'} = 1; });
 $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
-# Add a hash to keep track of passed obstacles
-my %passed_obstacles;
-
 # Drop bomb
 $mw->bind('<KeyPress-space>', sub {
-    # Create a bomb
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
     my $bomb = $canvas->createRectangle($hx1 + 25, $hy2, $hx1 + 35, $hy2 + 10, -fill => 'black');
     push @bombs, $bomb;
 });
 
-# Move the rectangle based on the state of the keys
+# ------------------------------ Main animation ------------------------------ #
 my $repeat_id = $mw->repeat(60, sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
 
@@ -157,12 +154,15 @@ my $repeat_id = $mw->repeat(60, sub {
     if ($key_state{'Up'} && $hy1 > 0) {
         $dy -= $speed;
     }
+
     if ($key_state{'Right'} && $hx2 < $canvas->cget('-width')) {
         $dx += $speed;
     }
+
     if ($key_state{'Left'} && $hx1 > 0) {
         $dx -= $speed;
     }
+
     if (!$key_state{'Up'} && $hy2 < $canvas->cget('-height')) {
         $dy += $speed;
     }
@@ -177,6 +177,7 @@ my $repeat_id = $mw->repeat(60, sub {
             my ($tx1, $ty1, $tx2, $ty2) = $canvas->bbox($tank->{tank});
             my @bomb_vertices = ([$bx1, $by1], [$bx2, $by1], [$bx2, $by2], [$bx1, $by2]);
             my @tank_vertices = ([$tx1, $ty1], [$tx2, $ty1], [$tx2, $ty2], [$tx1, $ty2]);
+            
             if (check_collision(\@bomb_vertices, \@tank_vertices)) {
                 $score += $tank->{score};
                 
@@ -195,11 +196,12 @@ my $repeat_id = $mw->repeat(60, sub {
             my @obstacle_coords = $canvas->coords($item);
             my @bomb_vertices = ([$bx1, $by1], [$bx2, $by1], [$bx2, $by2], [$bx1, $by2]);
             my @obstacle_vertices;
+            
             for (my $i = 0; $i < $#obstacle_coords; $i += 2) {
                 push @obstacle_vertices, [$obstacle_coords[$i], $obstacle_coords[$i + 1]];
             }
+            
             if (check_collision(\@bomb_vertices, \@obstacle_vertices)) {
-                # If there's a collision, delete the bomb
                 $canvas->delete($bomb);
                 @bombs = grep { $_ != $bomb } @bombs;
             }
@@ -214,11 +216,12 @@ my $repeat_id = $mw->repeat(60, sub {
         # Check for collisions with other bombs
         foreach my $other_bomb (@bombs) {
             next if $bomb == $other_bomb;  # Skip self
+            
             my ($obx1, $oby1, $obx2, $oby2) = $canvas->bbox($other_bomb);
             my @bomb_vertices = ([$bx1, $by1], [$bx2, $by1], [$bx2, $by2], [$bx1, $by2]);
             my @other_bomb_vertices = ([$obx1, $oby1], [$obx2, $oby1], [$obx2, $oby2], [$obx1, $oby2]);
+            
             if (check_collision(\@bomb_vertices, \@other_bomb_vertices)) {
-                # If there's a collision, delete both bombs
                 $canvas->delete($bomb);
                 $canvas->delete($other_bomb);
                 @bombs = grep { $_ != $bomb && $_ != $other_bomb } @bombs;
@@ -238,14 +241,16 @@ my $repeat_id = $mw->repeat(60, sub {
             $dx *= -1;
         }
 
-            # Check for collisions with the obstacles
+        # Check for collisions with the obstacles
         foreach my $item (@obstacles) {
             my @obstacle_coords = $canvas->coords($item);
             my @tank_vertices = ([$tx1 + $dx, $ty1], [$tx2 + $dx, $ty1], [$tx2 + $dx, $ty2], [$tx1 + $dx, $ty2]);
             my @obstacle_vertices;
+            
             for (my $i = 0; $i < $#obstacle_coords; $i += 2) {
                 push @obstacle_vertices, [$obstacle_coords[$i], $obstacle_coords[$i + 1]];
             }
+            
             if (check_collision(\@tank_vertices, \@obstacle_vertices)) {
                 # If there's a collision, reverse the direction
                 $tank->{direction} *= -1;
@@ -259,7 +264,7 @@ my $repeat_id = $mw->repeat(60, sub {
         $canvas->move($tank->{score_text}, $dx, 0);
     }
 
-    # Check for collisions in the new position
+    # Check for collisions in the new position of the helicopter
     foreach my $item (@obstacles) {
         my @obstacle_coords = $canvas->coords($item);
 
@@ -321,6 +326,7 @@ my $repeat_id = $mw->repeat(60, sub {
     if ($game_won && !$message_shown) {
         $message_shown = 1;  # Set the message box as shown
         my $response = $mw->messageBox(-message => "You won. Play again?", -type => "YesNo", -icon => "question");
+        
         if ($response eq 'Yes') {
             exec($^X, $0);  # Replay
         } else {
