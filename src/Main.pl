@@ -106,6 +106,7 @@ $dbh->disconnect();
 
 # -------------------------------- Movement handling ------------------------------- #
 my $speed = 5;
+my $tank_speed = 1;
 
 # Track the state of the keys
 my %key_state = (
@@ -209,7 +210,7 @@ my $repeat_id = $mw->repeat(60, sub {
     
     # Move the tanks
     foreach my $tank (@tanks) {
-        my $dx = $speed * $tank->{direction};
+        my $dx = $tank_speed * $tank->{direction};
         my ($tx1, $ty1, $tx2, $ty2) = $canvas->bbox($tank->{tank});
 
         # Check for collisions with the sides of the frame
