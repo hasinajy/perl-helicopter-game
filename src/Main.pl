@@ -75,6 +75,27 @@ while (my $row = $sth->fetchrow_hashref) {
     push @obstacles, $obstacle;
 }
 
+# Prepare and execute the SQL query for tanks
+my $sth_tanks = $dbh->prepare("SELECT coord_string, score FROM tank");
+$sth_tanks->execute();
+
+# Fetch the data and create the tanks
+while (my $row = $sth_tanks->fetchrow_hashref) {
+    my $coord_string = $row->{coord_string};
+    my $score = $row->{score};
+    my @coords = split /-/, $coord_string;
+    my @polygon_coords;
+    foreach my $coord (@coords) {
+        $coord =~ s/\[|\]//g;  # Remove the brackets
+        my ($x, $y) = split /;/, $coord;
+        push @polygon_coords, $x, $y;
+    }
+    # Create the tank on the canvas
+    my $tank = $canvas->createPolygon(@polygon_coords, -fill => 'black');
+    # Display the score inside the tank
+    my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] + 10, -text => $score, -fill => 'white');
+}
+
 # Disconnect from the database
 $dbh->disconnect();
 
