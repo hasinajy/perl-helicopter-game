@@ -97,8 +97,8 @@ while (my $row = $sth_tanks->fetchrow_hashref) {
     my $tank = $canvas->createPolygon(@polygon_coords, -fill => 'black');
     # Display the score inside the tank
     my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] + 10, -text => $score, -fill => 'white');
-    # Store the tank and its score in the @tanks array
-    push @tanks, { tank => $tank, score => $score_text };
+    # Store the tank and its score text in a hash
+    push @tanks, { tank => $tank, score_text => $score_text, direction => 1 };
 }
 
 # Disconnect from the database
@@ -206,13 +206,23 @@ my $repeat_id = $mw->repeat(60, sub {
             }
         }
     }
-
+    
     # Move the tanks
     foreach my $tank (@tanks) {
-        $canvas->move($tank->{tank}, $speed, 0);
-        $canvas->move($tank->{score}, $speed, 0);
-    }
+        my $dx = $speed * $tank->{direction};
+        my ($tx1, $ty1, $tx2, $ty2) = $canvas->bbox($tank->{tank});
 
+        # Check for collisions with the sides of the frame
+        if ($tx1 + $dx < 0 || $tx2 + $dx > $canvas->cget('-width')) {
+            # If there's a collision, reverse the direction
+            $tank->{direction} *= -1;
+            $dx *= -1;
+        }
+
+        # Move the tank and its score text
+        $canvas->move($tank->{tank}, $dx, 0);
+        $canvas->move($tank->{score_text}, $dx, 0);
+    }
 
     # Check for collisions in the new position
     foreach my $item (@obstacles) {
