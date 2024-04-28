@@ -11,6 +11,12 @@ my $game_won = 0;
 # Add a boolean variable to track if the message box has been shown
 my $message_shown = 0;
 
+# Add a variable to track the bomb
+my $bomb;
+
+# Add a variable to track the bombs
+my @bombs;
+
 # ------------------------------ Space variables ----------------------------- #
 my $heli_height = 25;
 my $block_size = 50;
@@ -81,6 +87,7 @@ my %key_state = (
     'Down' => 0,
     'Right' => 0,
     'Left' => 0,
+    'Space' => 0,  # Add a state for the Space key
 );
 
 # Move top
@@ -97,6 +104,14 @@ $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 
 # Add a hash to keep track of passed obstacles
 my %passed_obstacles;
+
+# Drop bomb
+$mw->bind('<KeyPress-space>', sub {
+    # Create a bomb
+    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
+    my $bomb = $canvas->createRectangle($hx1 + 25, $hy2, $hx1 + 35, $hy2 + 10, -fill => 'black');
+    push @bombs, $bomb;
+});
 
 # Move the rectangle based on the state of the keys
 my $repeat_id = $mw->repeat(60, sub {
@@ -123,6 +138,33 @@ my $repeat_id = $mw->repeat(60, sub {
     }
     if (!$key_state{'Up'} && $hy2 < $canvas->cget('-height')) {
         $dy += $speed;
+    }
+
+    # Move the bombs
+    foreach my $bomb (@bombs) {
+        $canvas->move($bomb, 0, $speed);
+        my ($bx1, $by1, $bx2, $by2) = $canvas->bbox($bomb);
+
+        # Check for collisions with the obstacles
+        foreach my $item (@obstacles) {
+            my @obstacle_coords = $canvas->coords($item);
+            my @bomb_vertices = ([$bx1, $by1], [$bx2, $by1], [$bx2, $by2], [$bx1, $by2]);
+            my @obstacle_vertices;
+            for (my $i = 0; $i < $#obstacle_coords; $i += 2) {
+                push @obstacle_vertices, [$obstacle_coords[$i], $obstacle_coords[$i + 1]];
+            }
+            if (check_collision(\@bomb_vertices, \@obstacle_vertices)) {
+                # If there's a collision, delete the bomb
+                $canvas->delete($bomb);
+                @bombs = grep { $_ != $bomb } @bombs;
+            }
+        }
+
+        # Check for collisions with the sides of the frame
+        if ($by2 > $canvas->cget('-height')) {
+            $canvas->delete($bomb);
+            @bombs = grep { $_ != $bomb } @bombs;
+        }
     }
 
     # Check for collisions in the new position
