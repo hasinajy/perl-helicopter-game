@@ -90,11 +90,12 @@ while (my $row = $sth_tanks->fetchrow_hashref) {
         push @polygon_coords, $x, $y;
     }
 
-    # Create the tank on the canvas
-    my $tank = $canvas->createPolygon(@polygon_coords, -fill => 'black');
+    # Tank
+    my $tank_img = $mw->Photo(-file => "tank-right.gif");
+    my $tank = $canvas->createImage($polygon_coords[0] + 25, $polygon_coords[1] + 15, -image => $tank_img);
     
     # Display the score inside the tank
-    my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] + 10, -text => $score, -fill => 'white');
+    my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] - 10, -text => $score, -fill => 'black');
     
     # Store the tank and its score text in a hash
     push @tanks, { tank => $tank, score => $score, score_text => $score_text, direction => 1 };
