@@ -33,6 +33,9 @@ my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill =
 my $tank_img_right = $mw->Photo(-file => "tank-right.gif");
 my $tank_img_left = $mw->Photo(-file => "tank-left.gif");
 
+# Load the bomb image
+my $bomb_img = $mw->Photo(-file => "bomb.gif");
+
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
 my $image = $mw->Photo(-file => "helicopter.gif");
@@ -137,7 +140,7 @@ $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 # Drop bomb
 $mw->bind('<KeyPress-space>', sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
-    my $bomb = $canvas->createRectangle($hx1 + 25, $hy2, $hx1 + 35, $hy2 + 10, -fill => 'black');
+    my $bomb = $canvas->createImage($hx1 + 25, $hy2, -image => $bomb_img);
     push @bombs, $bomb;
 });
 
