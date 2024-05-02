@@ -29,6 +29,10 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'w
 # Score display - Bottom right
 my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill => 'black');
 
+# Tank images
+my $tank_img_right = $mw->Photo(-file => "tank-right.gif");
+my $tank_img_left = $mw->Photo(-file => "tank-left.gif");
+
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
 my $image = $mw->Photo(-file => "helicopter.gif");
@@ -91,14 +95,13 @@ while (my $row = $sth_tanks->fetchrow_hashref) {
     }
 
     # Tank
-    my $tank_img = $mw->Photo(-file => "tank-right.gif");
-    my $tank = $canvas->createImage($polygon_coords[0] + 25, $polygon_coords[1] + 15, -image => $tank_img);
+    my $tank = $canvas->createImage($polygon_coords[0] + 25, $polygon_coords[1] + 15, -image => $tank_img_right);
     
     # Display the score inside the tank
     my $score_text = $canvas->createText($polygon_coords[0] + 25, $polygon_coords[1] - 10, -text => $score, -fill => 'black');
-    
+
     # Store the tank and its score text in a hash
-    push @tanks, { tank => $tank, score => $score, score_text => $score_text, direction => 1 };
+    push @tanks, { tank => $tank, score => $score, score_text => $score_text, direction => 1, image => $tank_img_right };
 }
 
 $dbh->disconnect();
@@ -240,6 +243,13 @@ my $repeat_id = $mw->repeat(60, sub {
             # If there's a collision, reverse the direction
             $tank->{direction} *= -1;
             $dx *= -1;
+
+            # Change the image based on the direction
+            if ($tank->{direction} == 1) {
+                $canvas->itemconfigure($tank->{tank}, -image => $tank_img_right);
+            } else {
+                $canvas->itemconfigure($tank->{tank}, -image => $tank_img_left);
+            }
         }
 
         # Check for collisions with the obstacles
@@ -256,6 +266,13 @@ my $repeat_id = $mw->repeat(60, sub {
                 # If there's a collision, reverse the direction
                 $tank->{direction} *= -1;
                 $dx *= -1;
+
+                # Change the image based on the direction
+                if ($tank->{direction} == 1) {
+                    $canvas->itemconfigure($tank->{tank}, -image => $tank_img_right);
+                } else {
+                    $canvas->itemconfigure($tank->{tank}, -image => $tank_img_left);
+                }
                 last;
             }
         }
