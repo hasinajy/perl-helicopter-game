@@ -41,6 +41,10 @@ my $bomb_img = $mw->Photo(-file => "bomb.gif");
 my $image = $mw->Photo(-file => "helicopter.gif");
 my $heli = $canvas->createImage(50, 575, -image => $image);
 
+# Load the image for the second helicopter
+my $image_reverse = $mw->Photo(-file => "helicopterR.gif");
+my $heli_reverse = $canvas->createImage(725, 85, -image => $image_reverse);
+
 # Take-off platform
 my @takeoff_coords = ((0, 600), (100, 600), (100, 650), (0, 650));
 $takeoff_platform = $canvas->createPolygon(@takeoff_coords, -fill => 'skyblue');
