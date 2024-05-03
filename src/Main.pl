@@ -144,8 +144,11 @@ $mw->bind('<KeyRelease-Left>', sub { $key_state{'Left'} = 0; });
 # Drop bomb
 $mw->bind('<KeyPress-space>', sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
+    my ($rx1, $ry2, $rx2, $ry2) = $canvas->bbox($heli_reverse);
     my $bomb = $canvas->createImage($hx1 + 25, $hy2, -image => $bomb_img);
+    my $bomb_r = $canvas->createImage($rx1 + 25, $ry2, -image => $bomb_img);
     push @bombs, $bomb;
+    push @bombs, $bomb_r;
 });
 
 # ------------------------------ Main animation ------------------------------ #
