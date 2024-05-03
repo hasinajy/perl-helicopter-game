@@ -152,6 +152,7 @@ $mw->bind('<KeyPress-space>', sub {
 });
 
 # ------------------------------ Main animation ------------------------------ #
+# Main helicopter animation
 my $repeat_id = $mw->repeat(60, sub {
     my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli);
 
