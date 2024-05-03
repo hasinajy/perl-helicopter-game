@@ -364,5 +364,88 @@ my $repeat_id = $mw->repeat(60, sub {
     }
 });
 
+# Reverse helicopter animation
+my $repeat_id = $mw->repeat(60, sub {
+    my ($hx1, $hy1, $hx2, $hy2) = $canvas->bbox($heli_reverse);
+
+    # Calculate the new position
+    my $new_hx1 = $hx1;
+    my $new_hy1 = $hy1;
+    my $new_hx2 = $hx2;
+    my $new_hy2 = $hy2;
+
+    # Calculate the potential movement in each direction
+    my $dx = 0;
+    my $dy = 0;
+
+    if ($key_state{'Up'} && $hy2 < $canvas->cget('-height')) {
+        $dy += $speed;
+    }
+
+    if ($key_state{'Right'} && $hx1 > 0) {
+        $dx -= $speed;
+    }
+
+    if ($key_state{'Left'} && ($hx1 + 50) < $canvas->cget('-width')) {
+        $dx += $speed;
+    }
+
+    if (!$key_state{'Up'} && $hy1 > 0) {
+        $dy -= $speed;
+    }
+
+    # Check for collisions in the new position of the helicopter
+    foreach my $item (@obstacles) {
+        my @obstacle_coords = $canvas->coords($item);
+
+        my @heli_vertices_h = ([$hx1 + $dx, $hy1], [$hx2 + $dx, $hy1], [$hx2 + $dx, $hy2], [$hx1 + $dx, $hy2]);
+        my @heli_vertices_v = ([$hx1, $hy1 + $dy], [$hx2, $hy1 + $dy], [$hx2, $hy2 + $dy], [$hx1, $hy2 + $dy]);
+
+        my @obstacle_vertices;
+        for (my $i = 0; $i < $#obstacle_coords; $i += 2) {
+            push @obstacle_vertices, [$obstacle_coords[$i], $obstacle_coords[$i + 1]];
+        }
+
+        # Check for collisions separately for horizontal and vertical movements
+        if (check_collision(\@heli_vertices_h, \@obstacle_vertices)) {
+            # If there's a collision, don't move horizontally
+            if ($dx > 0) { $dx = 0; }
+            if ($dx < 0) { $dx = 0; }
+        }
+        if (check_collision(\@heli_vertices_v, \@obstacle_vertices)) {
+            # If there's a collision, don't move vertically
+            if ($dy > 0) { $dy = 0; }
+            if ($dy < 0) { $dy = 0; }
+        }
+    }
+
+    # Move the helicopter
+    $canvas->move($heli_reverse, $dx, $dy);
+
+    # Score tracker - Increment on passed obstacles
+    foreach my $item (@obstacles) {
+        # Skip the platforms
+        next if $item == $takeoff_platform || $item == $landing_platform;
+
+        my @obstacle_coords = $canvas->coords($item);
+        my ($ox1, $oy1, $ox2, $oy2) = @obstacle_coords[0..3];  # Get the top left corner of the obstacle
+
+        # Pass check: checks for the left side of the helicopter
+        if ($hx1 > $ox2 && !$passed_obstacles{$item}) {
+            # Mark the obstacle as passed
+            $passed_obstacles{$item} = 1;
+
+            # Increment score based on gap size
+            if ($oy1 <= 3 * $heli_height) {
+                $score += 4;
+            } else {
+                $score += 2;
+            }
+
+            $canvas->itemconfigure($score_text, -text => "Score: $score");
+        }
+    }
+});
+
 # ------------------------------------ Run ----------------------------------- #
 MainLoop;
