@@ -30,19 +30,19 @@ my $canvas = $mw->Canvas(-width => $width, -height => $height, -background => 'w
 my $score_text = $canvas->createText(750, 750, -text => "Score: $score", -fill => 'black');
 
 # Tank images
-my $tank_img_right = $mw->Photo(-file => "tank-right.gif");
-my $tank_img_left = $mw->Photo(-file => "tank-left.gif");
+my $tank_img_right = $mw->Photo(-file => "../img/tank-right.gif");
+my $tank_img_left = $mw->Photo(-file => "../img/tank-left.gif");
 
 # Load the bomb image
-my $bomb_img = $mw->Photo(-file => "bomb.gif");
+my $bomb_img = $mw->Photo(-file => "../img/bomb.gif");
 
 # ------------------------------- Terrain setup ------------------------------ #
 # Helicopter
-my $image = $mw->Photo(-file => "helicopter.gif");
+my $image = $mw->Photo(-file => "../img/helicopter.gif");
 my $heli = $canvas->createImage(50, 575, -image => $image);
 
 # Load the image for the second helicopter
-my $image_reverse = $mw->Photo(-file => "helicopterR.gif");
+my $image_reverse = $mw->Photo(-file => "../img/helicopterR.gif");
 my $heli_reverse = $canvas->createImage(725, 85, -image => $image_reverse);
 
 # Take-off platform
